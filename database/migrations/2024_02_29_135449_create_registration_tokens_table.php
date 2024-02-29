@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->string('proposed_username');
             $table->char('value', 10)->unique();
             $table->boolean('is_valid')->default(1);
             $table->dateTime('expired_time');
