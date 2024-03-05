@@ -26,7 +26,7 @@ class RegistrationTokenController extends Controller
        } while (RegistrationToken::where('value', $token)->where('is_valid', 1)->exists());
 
        // The link should be updated with real URL after deployment
-       $registrationLink = 'http://localhost:3000/client?token=' . $token;
+       $registrationLink = config('app.frontend_url') . '?token=' . $token;
 
        RegistrationToken::create(
            array_merge($validated, [
