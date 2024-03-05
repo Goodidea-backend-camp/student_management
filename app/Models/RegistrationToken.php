@@ -10,7 +10,7 @@ class RegistrationToken extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = ['proposed_username', 'value', 'expired_time'];
     public function user(): belongsTo
     {
        return $this->belongsTo(User::class);
