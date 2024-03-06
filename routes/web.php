@@ -15,10 +15,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Route::get('/tokens', [RegistrationTokenController::class, 'index']);
 Route::post('/tokens', [RegistrationTokenController::class, 'store']);
 
