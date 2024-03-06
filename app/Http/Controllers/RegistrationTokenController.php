@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RegistrationToken;
-use DateTime;
+use App\Services\RegistrationTokenService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class RegistrationTokenController extends Controller
 {
+    public function __construct(
+        protected RegistrationTokenService $registrationTokenService
+    ){}
+
     public function index()
     {
-        return view('token.index', ['tokens' => RegistrationToken::all()]);
+        $tokens = $this->registrationTokenService->getTokens();
+
+        return view('token.index', ['tokens' => $tokens]);
     }
 
     public function store(Request $request)
@@ -20,22 +24,12 @@ class RegistrationTokenController extends Controller
            'proposed_username' => ['required', 'string', 'max:50'],
        ]);
 
-       // Generate a token, and if a token with the same value already exists, generate a new one.
-       do {
-           $token = Str::random(10);
-       } while (RegistrationToken::where('value', $token)->where('is_valid', 1)->exists());
+       $createdToken = $this->registrationTokenService->createToken($validated['proposed_username']);
 
-       // The link should be updated with real URL after deployment
-       $registrationLink = config('app.frontend_url') . '?token=' . $token;
-
-        $registrationToken = new RegistrationToken();
-        $registrationToken->proposed_username = $validated['proposed_username'];
-        $registrationToken->value = $token;
-        $registrationToken->expired_time = (new DateTime())->modify('+30 days')->format('Y-m-d H:i:s');
-        $registrationToken->save();
+       $registrationLink = config('app.frontend_url') . '?token=' . $createdToken->value;
 
        return redirect('/tokens')
            ->with('link', $registrationLink)
-           ->with('name', $validated['proposed_username']);
+           ->with('name', $createdToken->proposed_username);
     }
 }

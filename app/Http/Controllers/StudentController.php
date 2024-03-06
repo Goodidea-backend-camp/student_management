@@ -3,16 +3,52 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use DateTime;
+use App\Services\RegistrationTokenService;
+use App\Services\StudentService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 
 class StudentController extends Controller
 {
+    public function __construct(
+       protected StudentService $studentService,
+       protected RegistrationTokenService $registrationTokenService
+    ) {}
+
     public function index()
     {
+        $students = $this->studentService->getStudents();
+
         return view('progress', [
-            'students' => User::where('role', 'student')->get()
+            'students' => $students
         ]);
+    }
+
+    public function create(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'phone' => ['required', 'string', 'regex:/^09\d{8}$/', 'unique:'.User::class],
+            'password' => ['required', 'confirmed',
+                Password::min(8)
+                    ->max(255)
+                    ->mixedCase()
+                    ->numbers()
+            ],
+            'token' => 'required'
+        ]);
+
+        $tokenRecord = $this->registrationTokenService->getToken($validated['token']);
+
+        if (is_null($tokenRecord)) {
+            return response('Your registration token is incorrect', 422);
+        }
+
+        $createdStudent = $this->studentService->createStudent($validated);
+        $this->registrationTokenService->setTokenUsedBy(tokenRecord: $tokenRecord, user_id: $createdStudent->id);
+
+        return response($createdStudent, 201);
     }
 
     public function update(Request $request, User $user)
@@ -22,20 +58,7 @@ class StudentController extends Controller
             'leave_date' => ['date'],
         ]);
 
-        // start_date could be set only if it's null and request body contains start_date
-        if (is_null($user->start_date) && isset($validated['start_date'])) {
-            $user->start_date = $validated['start_date'];
-
-            // proposed_leave_date is six months after start_date
-            $user->proposed_leave_date = (new DateTime($validated['start_date']))->modify('+6 months');
-        }
-
-        // leave_date could be set only if it's null and request body contains leave_date
-        if (is_null($user->leave_date) && isset($validated['leave_date'])) {
-            $user->leave_date = $validated['leave_date'];
-        }
-
-        $user->save();
+        $this->studentService->updateStudent(user: $user, validated: $validated);
 
         return redirect('/students');
     }
