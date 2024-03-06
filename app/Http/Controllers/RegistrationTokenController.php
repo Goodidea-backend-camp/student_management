@@ -28,12 +28,11 @@ class RegistrationTokenController extends Controller
        // The link should be updated with real URL after deployment
        $registrationLink = config('app.frontend_url') . '?token=' . $token;
 
-       RegistrationToken::create(
-           array_merge($validated, [
-               'value' => $token,
-               'expired_time' => (new DateTime())->modify('+30 days')->format('Y-m-d H:i:s')
-           ])
-       );
+        $registrationToken = new RegistrationToken();
+        $registrationToken->proposed_username = $validated['proposed_username'];
+        $registrationToken->value = $token;
+        $registrationToken->expired_time = (new DateTime())->modify('+30 days')->format('Y-m-d H:i:s');
+        $registrationToken->save();
 
        return redirect('/tokens')
            ->with('link', $registrationLink)

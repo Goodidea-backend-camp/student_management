@@ -35,7 +35,12 @@ class RegisterController extends Controller
            return response('Your registration token is incorrect', 422);
         }
 
-        $user = User::create($validated);
+        $user = new User();
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->phone = $validated['phone'];
+        $user->password = $validated['password'];
+        $user->save();
 
         // Update registration_tokens
         $record->is_valid = 0;
