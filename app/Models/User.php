@@ -71,39 +71,46 @@ class User extends Authenticatable implements JWTSubject
 
     protected function passedDays(): Attribute
     {
-        // passed_days is null if start_date is not set
-        if (is_null($this->start_date)) {
+        $todayObject = new DateTime();
+        $startDateObject = new DateTime($this->start_date);
+        $diffObject = $todayObject->diff($startDateObject);
+
+        // passed_days is 'not started yet' if start_date is not set or in the future
+        // %R represents the sign of the interval
+        if (is_null($this->start_date) || $diffObject->format('%R') === '+') {
             return new Attribute(
-                get: fn() => null,
+                get: fn() => 'not started yet',
             );
         }
+
         return new Attribute(
-            get: fn() => (new DateTime())->diff(new DateTime($this->start_date))->format('%a'),
+            get: fn() => (int)($diffObject->format('%a')),
         );
     }
 
     protected function progress(): Attribute
     {
         // if the student had left (leave_date is set), progress is 100%
-        if (!is_null($this->leave_date)) {
+        if (! is_null($this->leave_date)) {
             return new Attribute(
                 get: fn() => 100,
             );
         }
 
-        // if start_date is not set, progress is null
-        if (is_null($this->start_date)) {
+        $todayObject = new DateTime();
+        $startDateObject = new DateTime($this->start_date);
+
+        // progress is 'not started yet' if start_date is not set or in the future
+        if (is_null($this->start_date) || $todayObject < $startDateObject) {
             return new Attribute(
-                get: fn() => null,
+                get: fn() => 'not started yet',
             );
         }
 
         // otherwise, compute the progress
-        $totalDaysInSixMonth = (int)(new DateTime($this->proposed_leave_date))->diff(new DateTime($this->start_date))->format('%a');
-        if (is_null($this->leave_date)) {
-            return new Attribute(
-                get: fn() => round(100 * $this->passed_days / $totalDaysInSixMonth),
-            );
-        }
+        $totalDaysInSixMonth = (int)(($startDateObject)->diff(new DateTime($this->proposed_leave_date))->format('%a'));
+        return new Attribute(
+            get: fn() => round(100 * $this->passed_days / $totalDaysInSixMonth),
+        );
     }
 }
