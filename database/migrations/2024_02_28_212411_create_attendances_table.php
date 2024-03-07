@@ -16,7 +16,6 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->date('date');
-            $table->boolean('isHoliday')->default(0);
             $table->time('arrived_time')->nullable();
             $table->time('left_time')->nullable();
             $table->enum('leave_span', ['whole', 'morning', 'afternoon'])->nullable();
