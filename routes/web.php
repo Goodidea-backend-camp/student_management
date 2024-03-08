@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\RegistrationTokenController;
+use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/tokens', [RegistrationTokenController::class, 'index']);
+Route::post('/tokens', [RegistrationTokenController::class, 'store']);
+
+Route::get('/students', [StudentController::class, 'index']);
+Route::patch('/students/{user}', [StudentController::class, 'update']);
